@@ -1,0 +1,108 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<style>
+    /* Grid layout for expense forms and transaction history */
+    .expense-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-top: 20px; }
+
+    /* Navigation arrows for changing months */
+    .month-nav { display: flex; justify-content: center; align-items: center; padding: 15px; margin-bottom: 25px; }
+    .month-title { font-size: 1.8rem; font-weight: 800; margin: 0 30px; }
+
+    /* Big cards for Budget, Spent, and Remaining totals */
+    .summary-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+    .stat-card { padding: 30px; text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 900; }
+    
+    /* Colors for financial status */
+    .text-green { color: var(--accent-primary); }
+    .text-red { color: #ef4444; }
+
+    /* Progress bar for budget tracking */
+    .progress-track { background: rgba(0,0,0,0.05); height: 10px; border-radius: 5px; margin-top: 15px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent-primary); }
+
+    /* List styling for transaction rows */
+    .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+</style>
+
+<div class="glass-panel month-nav">
+    <a href="?year={{ prev_year }}&month={{ prev_month }}" style="text-decoration:none; font-size:1.5rem;">←</a>
+    <div class="month-title">{{ month_name }} {{ current_year }}</div>
+    <a href="?year={{ next_year }}&month={{ next_month }}" style="text-decoration:none; font-size:1.5rem;">→</a>
+</div>
+
+<div class="summary-container">
+    <div class="glass-panel stat-card">
+        <div style="opacity:0.7; font-weight:700;">BUDGET</div>
+        <div class="stat-value" style="color:var(--accent-secondary);">Rp.{{ spendable }}</div>
+    </div>
+    <div class="glass-panel stat-card">
+        <div style="opacity:0.7; font-weight:700;">SPENT</div>
+        <div class="stat-value text-red">Rp.{{ total_spent }}</div>
+    </div>
+    <div class="glass-panel stat-card">
+        <div style="opacity:0.7; font-weight:700;">REMAINING</div>
+        <div class="stat-value {% if remaining < 0 %}text-red{% else %}text-green{% endif %}">Rp.{{ remaining }}</div>
+        <div class="progress-track">
+            <div class="progress-fill" style="width: {% widthratio total_spent spendable 100 %}%; max-width: 100%;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="expense-grid">
+    <div>
+        <div class="glass-panel" style="padding: 30px; margin-bottom: 25px;">
+            <div style="font-weight: 800; color: var(--accent-primary); margin-bottom: 20px;">+ NEW TRANSACTION</div>
+            <form action="{% url 'add_expense' %}" method="POST">
+                {% csrf_token %}
+                <div style="margin-bottom: 15px;">{{ expense_form.title }}</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <input type="number" name="amount" min="0.01" step="0.01" required placeholder="0.00" style="padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.1);">
+                    {{ expense_form.date }}
+                </div>
+                <div style="margin-bottom: 15px;">{{ expense_form.category }}</div>
+                <button type="submit" style="width:100%; background:var(--accent-primary); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;">Add Expense</button>
+            </form>
+        </div>
+
+        <div class="glass-panel" style="padding: 30px;">
+            <div style="font-weight: 800; opacity: 0.7; margin-bottom: 20px;">Monthly Budget</div>
+            <form action="{% url 'update_budget' %}" method="POST">
+                {% csrf_token %}
+                <label style="font-size: 0.7rem; font-weight: bold;">MONTHLY INCOME</label>
+                <input type="number" name="total_income" value="{{ budget.total_income }}" style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid rgba(0,0,0,0.1);">
+                
+                <label style="font-size: 0.7rem; font-weight: bold;">SAVING GOAL</label>
+                <input type="number" name="savings_goal" value="{{ budget.savings_goal }}" style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid rgba(0,0,0,0.1);">
+                
+                <input type="hidden" name="year" value="{{ current_year }}">
+                <input type="hidden" name="month" value="{{ current_month }}">
+                <button type="submit" style="width:100%; background:var(--text-main); color:white; border:none; padding:12px; border-radius:12px;">Update Budget</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="overflow: hidden; display: flex; flex-direction: column;">
+        <div style="padding: 25px; border-bottom: 1px solid rgba(0,0,0,0.05); background: rgba(0,0,0,0.03);">
+            <h3 style="margin: 0; opacity: 0.8;">History</h3>
+        </div>
+        <div style="overflow-y: auto; max-height: 600px;">
+            {% for expense in expenses %}
+            <div class="expense-item">
+                <div>
+                    <div style="font-weight: 800; font-size: 1.1rem;">{{ expense.title }}</div>
+                    <div style="opacity: 0.6; font-size: 0.85rem;">{{ expense.date|date:"M d" }} • {{ expense.get_category_display }}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 900; color: #ef4444;">-Rp.{{ expense.amount }}</div>
+                    <a href="{% url 'delete_expense' expense.pk %}" style="color: var(--text-muted); font-size: 0.7rem; text-decoration: none;">DELETE</a>
+                </div>
+            </div>
+            {% empty %}
+            <p style="padding: 50px; text-align: center; opacity: 0.5;">No transactions this month.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

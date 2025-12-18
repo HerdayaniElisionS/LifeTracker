@@ -1,0 +1,149 @@
+/* Load the modern Outfit font from Google */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap');
+
+/* Set the default page height and font */
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    background-color: #f4f6f8;
+}
+
+/* Create a side-by-side layout for the login/register pages */
+.split-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Style the big decorative image card on the side */
+.image-side {
+    flex: 1.2;
+    height: 95%;
+    
+    /* Set the background image path */
+    background-image: url('../images/auth_bg.jpg');
+    
+    /* Ensure the image fills the space nicely with rounded corners */
+    background-size: cover;
+    background-position: center;
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    margin-right: 20px;
+}
+
+/* Center the form content in its half of the screen */
+.form-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+/* Limit the width of the form so it doesn't look too wide on large screens */
+.form-content {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* Style the main "Welcome" or "Register" heading */
+.form-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+/* Style the smaller text below the title */
+.form-subtitle {
+    margin-bottom: 30px;
+    font-size: 1rem;
+    opacity: 0.6;
+    font-weight: 500;
+}
+
+/* Style the input boxes for username and password */
+.auth-input { 
+    width: 100%;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: 0.3s;
+    background: white;
+}
+
+/* Change the border color when the user clicks into an input */
+.auth-input:focus {
+    border-color: #0f766e;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.1);
+}
+
+/* Style the main Login/Register button */
+.auth-button {
+    width: 100%;
+    padding: 15px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Make the button lift up slightly when hovered */
+.auth-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* Set general link styles */
+a {
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* Add an underline when hovering over a link */
+a:hover {
+    text-decoration: underline;
+}
+
+/* Specific colors for the Login page theme */
+body.login-theme {
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+.login-theme .auth-button {
+    background-color: #1e293b;
+    color: white;
+}
+.login-theme a {
+    color: #1e293b;
+}
+
+/* Specific colors for the Register page theme */
+body.register-theme {
+    background-color: #ffffff;
+    color: #1e293b;
+}
+.register-theme .auth-button {
+    background-color: #0f766e;
+    color: white;
+}
+.register-theme a {
+    color: #0f766e;
+}

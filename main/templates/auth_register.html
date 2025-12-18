@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Life Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body class="register-theme">
+
+    <div class="split-container">
+        <div class="form-side">
+            <div class="form-content">
+                <h1 class="form-title">Create Account</h1>
+                <p class="form-subtitle">start TRACKING your life now</p>
+
+                <form method="POST">
+                    {% csrf_token %} {% for field in form %}
+                    <div>
+                        {{ field }} {% if field.errors %}
+                            <div style="color: #ef4444; font-size: 0.8em; margin-bottom: 5px;">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <button type="submit" class="auth-button">REGISTER</button>
+                </form>
+
+                <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.8; color: #1a2226;">
+                    Already have an account? <a href="{% url 'login' %}">Login here</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="image-side"></div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<style>
+    /* Split the page into two columns for schedule and tasks */
+    .planner-container { display: grid; grid-template-columns: 2fr 1.2fr; gap: 30px; margin-top: 20px; }
+
+    /* Colors for high, medium, and low priority tasks */
+    .priority-high { border-left: 5px solid #ef4444 !important; background: rgba(239, 68, 68, 0.15) !important; }
+    .priority-medium { border-left: 5px solid #f97316 !important; background: rgba(249, 115, 22, 0.15) !important; }
+    .priority-low { border-left: 5px solid #22c55e !important; background: rgba(34, 197, 94, 0.15) !important; }
+
+    /* Strike through text for completed items */
+    .is-done { opacity: 0.5; text-decoration: line-through; }
+
+    /* Date navigation header */
+    .date-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; margin-bottom: 25px; }
+
+    /* Form boxes for adding new items */
+    .form-box { background: var(--clearblur-card); padding: 20px; border-radius: 16px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.2); }
+
+    /* Individual items in the list */
+    .timeline-item, .task-item {
+        background: var(--clearblur-card); padding: 15px; border-radius: 16px; margin-bottom: 15px;
+        display: flex; align-items: center; justify-content: space-between; transition: 0.2s;
+    }
+    .task-item:hover { background: white; transform: scale(1.02); }
+
+    /* Red X button for deleting items */
+    .delete-btn { color: #ef4444; text-decoration: none; font-size: 1.4rem; font-weight: bold; margin-left: 10px; }
+</style>
+
+<div class="glass-panel date-nav">
+    <div style="display: flex; gap: 10px; flex: 1;">
+        <a href="{% url 'planner_page' prev_day %}" class="nav-btn" style="text-decoration:none; color:inherit;">← Prev</a>
+        {% if not is_today %}
+        <a href="{% url 'planner' %}" style="text-decoration:none; background:var(--accent-primary); color:white; padding:5px 10px; border-radius:8px;">Today</a>
+        {% endif %}
+    </div>
+    <div style="text-align: center; flex: 2;">
+        <div style="font-weight: 700; opacity: 0.7;">{% if is_today %}TODAY{% else %}{{ view_date|date:"l" }}{% endif %}</div>
+        <div style="font-size: 1.5rem; font-weight: 900;">{{ view_date|date:"F jS, Y" }}</div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; flex: 1;">
+        <a href="{% url 'planner_page' next_day %}" class="nav-btn" style="text-decoration:none; color:inherit;">Next →</a>
+    </div>
+</div>
+
+<div class="planner-container">
+    <div>
+        <div class="glass-panel" style="padding: 30px;">
+            <div class="section-title" style="font-weight: 800; margin-bottom: 20px;">DAILY SCHEDULE</div>
+            
+            <div class="form-box">
+                <form action="{% url 'add_schedule_event' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="view_date" value="{{ view_date|date:'Y-m-d' }}">
+                    <div style="margin-bottom: 15px;">{{ schedule_form.title }}</div>
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex:1;">{{ schedule_form.start_time }}</div>
+                        <div style="flex:1;">{{ schedule_form.end_time }}</div>
+                    </div>
+                    <button type="submit" style="width:100%; margin-top:15px; background:var(--accent-primary); color:white; border:none; padding:10px; border-radius:12px; cursor:pointer;">Add Event</button>
+                </form>
+            </div>
+
+            {% for event in schedule_items %}
+            <div class="timeline-item">
+                <div>
+                    <span style="color: var(--accent-primary); font-weight: bold; font-size: 0.8rem;">{{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}</span>
+                    <div style="font-weight: 700;">{{ event.title }}</div>
+                </div>
+                <a href="{% url 'delete_schedule_event' event.pk %}" class="delete-btn">×</a>
+            </div>
+            {% empty %}
+            <p style="text-align: center; opacity: 0.5;">No events today.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div>
+        <div class="glass-panel" style="padding: 30px; margin-bottom: 25px;">
+            <div style="font-weight: 800; margin-bottom: 20px;">DEADLINES</div>
+            <div class="form-box">
+                <form action="{% url 'add_reminder' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="view_date" value="{{ view_date|date:'Y-m-d' }}">
+                    <div style="margin-bottom: 15px;">{{ reminder_form.title }}</div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">{{ reminder_form.due_date }} {{ reminder_form.priority }}</div>
+                    <button type="submit" style="width:100%; background:var(--accent-primary); color:white; border:none; padding:10px; border-radius:12px;">Set Deadline</button>
+                </form>
+            </div>
+            {% for reminder in reminders %}
+            <div class="task-item priority-{{ reminder.priority|lower }} {% if reminder.is_completed %}is-done{% endif %}">
+                <div style="flex: 1;">
+                    <div style="font-weight: 700;">{{ reminder.title }}</div>
+                    <div style="font-size: 0.75em;">Due: {{ reminder.due_date|date:"M j, H:i" }}</div>
+                </div>
+                <a href="{% url 'toggle_reminder' reminder.pk %}" style="text-decoration:none; margin-right: 10px;">
+                    {% if reminder.is_completed %} ● {% else %} ○ {% endif %}
+                </a>
+                <a href="{% url 'delete_reminder' reminder.pk %}" class="delete-btn">×</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="glass-panel" style="padding: 30px;">
+            <div style="font-weight: 800; margin-bottom: 20px;">QUICK TASKS</div>
+            <form action="{% url 'add_todo' %}" method="POST" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                {% csrf_token %}
+                <input type="hidden" name="view_date" value="{{ view_date|date:'Y-m-d' }}">
+                {{ todo_form.title }}
+                <button type="submit" style="background:var(--accent-primary); color:white; border:none; padding: 0 15px; border-radius:12px;">+</button>
+            </form>
+            {% for todo in simple_todos %}
+            <div class="task-item {% if todo.done %}is-done{% endif %}">
+                <a href="{% url 'toggle_todo' todo.pk %}" style="text-decoration: none; color: inherit; flex: 1; display: flex; align-items: center;">
+                    <span style="margin-right: 10px; color: var(--accent-primary);">{% if todo.done %} ● {% else %} ○ {% endif %}</span>
+                    {{ todo.title }}
+                </a>
+                <a href="{% url 'delete_todo' todo.pk %}" class="delete-btn">×</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

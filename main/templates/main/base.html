@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Tracker</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            /* Set the background image and glass effect transparency */
+            --bg-image: url('/static/images/background1.png');
+            --clearblur-card: rgba(255, 255, 255, 0.35);
+            --glass-blur: blur(20px);
+            --glass-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            
+            /* Main theme colors for text and buttons */
+            --text-main: #1e293b;
+            --text-muted: #475569;
+            --accent-primary: #0f766e;
+            --accent-secondary: #0ea5e9;
+            --radius: 24px;
+        }
+
+        body {
+            /* Fix the background image so it does not move when scrolling */
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* The glass effect class used for all containers */
+        .glass-panel {
+            background: var(--clearblur-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: none;
+            box-shadow: var(--glass-shadow);
+            border-radius: var(--radius);
+        }
+
+        /* Navigation bar styling */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.2); 
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-logo img {
+            height: 40px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); 
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* Links in the navigation bar */
+        .nav-item {
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.6);
+            color: var(--accent-primary);
+        }
+
+        /* Red logout button styling */
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.3);
+            color: #b91c1c;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-logout:hover {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{% url 'dashboard' %}" class="nav-logo">
+            <img src="{% static 'images/Logo_LifeTracker.png' %}" alt="Life Tracker">
+        </a>
+        
+        <div class="nav-menu">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="nav-item">Dashboard</a>
+                <a href="{% url 'planner' %}" class="nav-item">Planner</a>
+                <a href="{% url 'expenses' %}" class="nav-item">Wallet</a>
+                
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="nav-item">Login</a>
+                <a href="{% url 'register' %}" class="nav-item" style="background: rgba(15, 118, 110, 0.8); color: white;">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="main-container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer style="text-align: center; padding: 20px; opacity: 0.5;">
+        ©2025 Elision. All rights reserved.
+    </footer>
+
+</body>
+</html>

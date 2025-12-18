@@ -1,0 +1,162 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<style>
+    /* Create a grid layout with 3 columns for the dashboard cards */
+    .bento-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr 1fr;
+        grid-template-rows: repeat(2, minmax(220px, auto));
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    /* Style for each dashboard box (card) */
+    .bento-card {
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    /* Make cards pop out when hovered over */
+    .bento-card:hover {
+        transform: translateY(-5px) scale(1.01);
+        background: rgba(255,255,255,0.75);
+    }
+
+    /* Header style for each card */
+    .card-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-muted);
+        font-weight: 800;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding-bottom: 10px;
+    }
+
+    /* Position the different cards in the grid */
+    .card-schedule { grid-column: 1 / 2; grid-row: 1 / 3; }
+    .card-expense { grid-column: 2 / 3; grid-row: 1 / 2; }
+    .card-todo { grid-column: 2 / 3; grid-row: 2 / 3; }
+    .card-weather { grid-column: 3 / 4; grid-row: 1 / 2; text-align: center; }
+    .card-reminder { grid-column: 3 / 4; grid-row: 2 / 3; }
+
+    /* Style for list items inside cards */
+    .schedule-item { border-left: 5px solid var(--accent-primary); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 10px; }
+    .todo-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); text-decoration: none; color: inherit; }
+</style>
+
+<div style="margin-bottom: 30px;">
+    <h1 style="font-size: 2.5rem; margin: 0; font-weight: 900;">
+        Hello, {{ user.first_name|default:user.username|title }}!
+    </h1>
+    <p style="opacity: 0.8;">Your personal dashboard.</p>
+</div>
+
+<div class="bento-grid">
+    <div class="glass-panel bento-card card-schedule">
+        <div class="card-title">Timeline</div>
+        {% if todays_schedule %}
+            {% for item in todays_schedule %}
+            <div class="schedule-item">
+                <div style="color: var(--accent-primary); font-weight: bold;">{{ item.start_time|time:"H:i" }}</div>
+                <div style="font-weight: 700;">{{ item.title }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="opacity: 0.6; text-align: center;">No plans today.</p>
+            <a href="{% url 'planner' %}" style="text-align: center; color: var(--accent-primary); font-weight: bold; margin-top: auto;">+ Add Event</a>
+        {% endif %}
+    </div>
+
+    <div class="glass-panel bento-card card-expense">
+        <div class="card-title" style="display:flex; justify-content:space-between;">
+            <span>Spent</span>
+            <span style="color: #ef4444;">${{ total_spent }}</span>
+        </div>
+        <div style="position: relative; flex: 1;">
+            <canvas id="expenseChart"></canvas>
+        </div>
+    </div>
+
+    <div class="glass-panel bento-card card-weather">
+        <div style="font-size: 0.8rem; font-weight: 800; opacity: 0.7;">NOW</div>
+        <h2 id="clock-display" style="font-size: 3.5rem; margin: 0; font-weight: 900; color: var(--accent-primary);">--:--</h2>
+        <div style="font-size: 1.2rem; font-weight: 700;">
+            <span id="weather-temp">--°C</span> 
+            <span style="font-weight: 400; opacity: 0.8; margin-left: 5px;">Jakarta</span>
+        </div>
+    </div>
+
+    <div class="glass-panel bento-card card-todo">
+        <div class="card-title">Tasks</div>
+        {% for todo in recent_todos %}
+        <a href="{% url 'toggle_todo' todo.pk %}" class="todo-item">
+            <span style="margin-right: 10px;">○</span> {{ todo.title }}
+        </a>
+        {% empty %}
+        <p style="font-style: italic; opacity: 0.6;">No tasks pending.</p>
+        {% endfor %}
+    </div>
+
+    <div class="glass-panel bento-card card-reminder">
+        <div class="card-title">Reminders</div>
+        {% for reminder in reminders %}
+        <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <span style="font-weight: bold;">{{ reminder.title }}</span>
+            <span style="color: #ef4444; font-size: 0.85em;">{{ reminder.due_date|date:"M d" }}</span>
+        </div>
+        {% empty %}
+        <p style="opacity: 0.6;">No reminders.</p>
+        {% endfor %}
+        <button onclick="window.location.href='{% url 'planner' %}'" style="margin-top: auto; border-radius: 8px; border: none; padding: 8px; cursor: pointer;">+ Add</button>
+    </div>
+</div>
+
+<script>
+    /* Automatically update the time every second */
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('clock-display').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    /* Fetch real weather data from a free API */
+    async function getWeather() {
+        try {
+            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-6.2088&longitude=106.8456&current_weather=true`);
+            const data = await response.json();
+            document.getElementById('weather-temp').innerText = `${Math.round(data.current_weather.temperature)}°C`;
+        } catch (e) {
+            document.getElementById('weather-temp').innerText = "30°C";
+        }
+    }
+    getWeather();
+
+    /* Draw the bar chart for spending using Chart.js */
+    const ctx = document.getElementById('expenseChart');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels|default:"[]"|safe }},
+            datasets: [{
+                data: {{ chart_data|default:"[]"|safe }},
+                backgroundColor: 'rgba(15, 118, 110, 0.7)',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { display: false } } }
+        }
+    });
+</script>
+{% endblock %}
