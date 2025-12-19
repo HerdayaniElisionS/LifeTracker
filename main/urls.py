@@ -19,7 +19,7 @@ urlpatterns = [
     path('add-expense/', views.add_expense, name='add_expense'),
     path('delete-expense/<int:pk>/', views.delete_expense, name='delete_expense'),
 
-    # Actions - Schedule (THIS WAS THE MISSING PART)
+    # Actions - Schedule 
     path('add-schedule/', views.add_schedule_event, name='add_schedule_event'), 
     path('delete-schedule/<int:pk>/', views.delete_schedule_event, name='delete_schedule_event'),
 
